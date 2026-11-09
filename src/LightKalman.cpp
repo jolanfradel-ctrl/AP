@@ -38,17 +38,12 @@ void LightKalman::predict(float acc_x, float acc_y, float gain_Q) {
     float final_acc_y = acc_y;
     float final_Q = gain_Q;
 
-    //Si le mouvement est trop faible (bruit/repos), on force l'accélération à zéro
-    // et on réduit drastiquement Q pour bloquer la dérive de la covariance
-         if (acc_magnitude < motionThreshold) {
-             final_acc_x = 0.0f;
-             final_acc_y = 0.0f;
-             final_Q = 0.0f; 
-             // On force aussi la vitesse estimée précédente à zéro pour dissiper l'énergie accumulée
-             x_lat[1] = 0.0;
-             x_lng[1] = 0.0;
-         }
-
+    //Si le mouvement et trop faible, cad si on ne percoit que la gravité, on considère que le véhicule est immobile et on "lock" le filtre
+    //On realise donc une moyenne glissante sur les valeurs du gps, en encartant cela, on ne fait pas évoluer la vitesse estimée, ce qui permet de dissiper l'énergie accumulée dans le filtre
+    if (acc_magnitude < motionThreshold) {
+             LightKalman::filterGps();
+             
+    }
     // Conversion m/s² en degrés GPS
     const float M_TO_DEG = 0.000009f;
     float acc_lat_deg = final_acc_y * M_TO_DEG; 
@@ -98,4 +93,13 @@ void LightKalman::updateAxis(double &x_pos, double &x_vel, float P[2][2], double
     float P11_n = P[1][1] - K[1] * P[0][1];
 
     P[0][0] = P00_n; P[0][1] = P01_n; P[1][0] = P10_n; P[1][1] = P11_n;
+}
+
+void LightKalman::filterGps() {
+    // On réalise une moyenne glissante sur les valeurs du GPS pour "lock" le filtre
+    const float alpha = 0.1f; // Coefficient de lissage (0 < alpha < 1)
+    x_lat[0] = alpha * x_lat[0] + (1 - alpha) * x_lat[0];
+    x_lng[0] = alpha * x_lng[0] + (1 - alpha) * x_lng[0];
+
+    // On ne met pas à jour la vitesse estimée, ce qui permet de dissiper l'énergie accumulée dans le filtre
 }

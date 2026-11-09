@@ -19,6 +19,7 @@ private:
 
     void predictAxis(double &x_pos, double &x_vel, float P[2][2], float acc, float dt, float Q);
     void updateAxis(double &x_pos, double &x_vel, float P[2][2], double gps_val, float R);
+    void filterGps();
     
 public:
     LightKalman();

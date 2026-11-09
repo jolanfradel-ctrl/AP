@@ -21,20 +21,21 @@ void EepromManager::readBytes(uint16_t addr, uint8_t* data, uint8_t len) {
     }
 }
 
-bool EepromManager::save(float P, float Q, float R, float lock) {
+bool EepromManager::save(float P, float Q, float Qbias, float R, float lock) {
     GainData g;
     g.magic = EEPROM_MAGIC;
     g.gain_P = P;
     g.gain_Q = Q;
+    g.gain_Qbias = Qbias;
     g.gain_R = R;
     g.lock_sensitivity = lock;
 
     writeBytes(0x00, (uint8_t*)&g, sizeof(GainData));
-    Serial.printf("[EEPROM] Gains sauvegardés : P=%.4f Q=%.5f R=%.4f LOCK=%.3f\n", P, Q, R, lock);
+    Serial.printf("[EEPROM] Gains sauvegardés : P=%.4f Q=%.5f Qbias=%.5f R=%.4f LOCK=%.3f\n", P, Q, Qbias, R, lock);
     return true;
 }
 
-bool EepromManager::load(float &P, float &Q, float &R, float &lock) {
+bool EepromManager::load(float &P, float &Q, float &Qbias, float &R, float &lock) {
     GainData g;
     readBytes(0x00, (uint8_t*)&g, sizeof(GainData));
 
@@ -45,8 +46,9 @@ bool EepromManager::load(float &P, float &Q, float &R, float &lock) {
 
     P    = g.gain_P;
     Q    = g.gain_Q;
+    Qbias = g.gain_Qbias;
     R    = g.gain_R;
     lock = g.lock_sensitivity;
-    Serial.printf("[EEPROM] Gains chargés : P=%.4f Q=%.5f R=%.4f LOCK=%.3f\n", P, Q, R, lock);
+    Serial.printf("[EEPROM] Gains chargés : P=%.4f Q=%.5f Qbias=%.5f R=%.4f LOCK=%.3f\n", P, Q, Qbias, R, lock);
     return true;
 }
